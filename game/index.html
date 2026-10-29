@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Buddy&rsquo;s Run &mdash; Buddy&rsquo;s Burrow</title>
+<meta name="description" content="A small game about hopping logs and catching acorns on the way down. Tap to hop, tap again to boost.">
+<meta name="theme-color" content="#100c0a">
+<link rel="icon" href="../img/icon.png">
+<link rel="apple-touch-icon" href="../img/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#221a13;
+    --ink-soft:#5f4d3e;
+    --paper:#f7f0e2;
+    --night:#100c0a;
+    --night-soft:#1c1512;
+    --buddy:#b39dff;
+    --buddy-deep:#5c3f96;
+    --amber:#e9a24e;
+    --shell:1180px;
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    margin:0;
+    background:var(--night);
+    color:#f6ecdd;
+    font-family:"Instrument Sans",-apple-system,BlinkMacSystemFont,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  a{ color:inherit; }
+  .skip{ position:absolute; left:-9999px; }
+  .skip:focus{ left:12px; top:12px; z-index:99; background:var(--paper); color:var(--ink); padding:10px 16px; border-radius:6px; }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:20px; flex-wrap:wrap;
+    padding:18px clamp(16px,4vw,40px);
+    border-bottom:1px solid rgba(246,236,221,.1);
+  }
+  .wordmark{
+    display:inline-flex; align-items:center; gap:10px;
+    font-family:"Fraunces",Georgia,serif;
+    font-size:1.05rem; letter-spacing:.01em;
+    text-decoration:none; color:#f6ecdd;
+  }
+  .wordmark__dot{
+    width:8px; height:8px; border-radius:50%;
+    background:var(--buddy);
+    box-shadow:0 0 0 4px rgba(179,157,255,.18);
+  }
+  .topnav{ display:flex; gap:clamp(14px,2.4vw,26px); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; font-weight:500; }
+  .topnav a{ text-decoration:none; color:rgba(246,236,221,.62); transition:color .25s ease; }
+  .topnav a:hover{ color:#f6ecdd; }
+
+  main{ flex:1; display:flex; flex-direction:column; justify-content:center; padding:clamp(20px,4vw,44px) clamp(16px,4vw,40px); }
+  .wrap{ width:100%; max-width:var(--shell); margin:0 auto; }
+
+  .head{ margin:0 auto clamp(18px,2.6vw,26px); max-width:760px; }
+  .eyebrow{
+    display:flex; align-items:center; gap:12px;
+    margin:0 0 14px;
+    font-size:.66rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--buddy);
+  }
+  .eyebrow::before{ content:""; width:30px; height:1px; background:currentColor; opacity:.8; flex:none; }
+  h1{
+    font-family:"Fraunces",Georgia,serif;
+    font-size:clamp(1.9rem,4.4vw,3rem);
+    line-height:1.02; letter-spacing:-.028em;
+    margin:0 0 12px; color:#fbf4e7;
+  }
+  .lede{ margin:0; color:rgba(240,230,215,.72); max-width:38em; line-height:1.6; font-size:clamp(.95rem,1.4vw,1.05rem); }
+
+  .stage{
+    position:relative;
+    width:100%;
+    max-width:760px;
+    margin:0 auto;
+    border-radius:14px;
+    overflow:hidden;
+    background:#0b0806;
+    box-shadow:0 30px 70px -40px rgba(0,0,0,.95), 0 0 0 1px rgba(246,236,221,.09);
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+  canvas{ display:block; width:100%; height:auto; }
+
+  .hud{
+    position:absolute; inset:0;
+    pointer-events:none;
+    padding:clamp(10px,1.8vw,16px);
+    display:flex; align-items:flex-start; justify-content:space-between;
+    font-size:clamp(.72rem,1.5vw,.86rem);
+    font-weight:600; letter-spacing:.06em;
+  }
+  .hud__score{ display:flex; align-items:center; gap:8px; color:#fbf4e7; text-shadow:0 2px 10px rgba(0,0,0,.8); }
+  .hud__score b{ font-size:1.25em; font-variant-numeric:tabular-nums; }
+  .hud__right{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .hearts{ display:flex; gap:4px; font-size:1.05em; letter-spacing:0; }
+  .hearts span{ opacity:.22; transition:opacity .2s ease, transform .2s ease; }
+  .hearts span.on{ opacity:1; }
+  .combo{
+    font-size:.72em; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--buddy); opacity:0; transition:opacity .2s ease;
+  }
+  .combo.on{ opacity:1; }
+
+  .bubble{
+    position:absolute; left:50%; top:clamp(40px,7vw,54px);
+    transform:translate(-50%,-6px);
+    max-width:min(66%,26em);
+    padding:7px 12px;
+    border-radius:11px;
+    background:rgba(247,240,226,.96);
+    color:#241a12;
+    font-size:clamp(.68rem,1.3vw,.8rem);
+    line-height:1.4;
+    text-align:center;
+    opacity:0; pointer-events:none;
+    transition:opacity .22s ease, transform .22s ease;
+    box-shadow:0 14px 30px -18px rgba(0,0,0,.9);
+  }
+  .bubble.on{ opacity:1; transform:translate(-50%,0); }
+
+  .overlay{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    padding:clamp(10px,2vw,18px);
+    overflow-y:auto;
+    background:rgba(9,6,5,.72);
+    backdrop-filter:blur(3px);
+    -webkit-backdrop-filter:blur(3px);
+    opacity:0; pointer-events:none;
+    transition:opacity .25s ease;
+  }
+  .overlay.on{ opacity:1; pointer-events:auto; }
+  .card{
+    width:100%; max-width:24em;
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:14px;
+    padding:clamp(16px,2.6vw,24px);
+    text-align:center;
+    box-shadow:0 30px 60px -30px rgba(0,0,0,.9);
+  }
+  .card h2{
+    font-family:"Fraunces",Georgia,serif;
+    font-size:clamp(1.15rem,2.4vw,1.45rem);
+    line-height:1.1; margin:0 0 8px; letter-spacing:-.02em;
+  }
+  .card p{ margin:0 0 14px; color:var(--ink-soft); line-height:1.5; font-size:.88rem; }
+  .card p:last-of-type{ margin-bottom:20px; }
+  .card .big{ font-size:1.5rem; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:10px;
+    width:100%;
+    padding:12px 18px;
+    border:0; border-radius:8px;
+    background:var(--night);
+    color:#f5e9d6;
+    font-family:inherit; font-size:.82rem; font-weight:600;
+    letter-spacing:.14em; text-transform:uppercase;
+    cursor:pointer;
+    transition:background .2s ease, transform .12s ease;
+  }
+  .btn:hover{ background:#2a1f19; }
+  .btn:active{ transform:scale(.985); }
+  .btn--ghost{ background:transparent; color:var(--ink); box-shadow:inset 0 0 0 1.5px rgba(34,26,19,.22); margin-top:10px; }
+  .btn--ghost:hover{ background:rgba(34,26,19,.06); }
+  .choices{ display:grid; gap:9px; }
+  .choice{
+    display:flex; align-items:center; justify-content:center; gap:9px;
+    padding:13px 16px;
+    border:0; border-radius:8px;
+    background:rgba(92,63,150,.1);
+    color:var(--ink);
+    font-family:inherit; font-size:.92rem; font-weight:600;
+    cursor:pointer;
+    transition:background .18s ease;
+  }
+  .choice:hover{ background:rgba(92,63,150,.2); }
+  .choice span{ font-size:1.15em; }
+
+  .hint{
+    margin:14px auto 0;
+    max-width:760px;
+    font-size:.76rem; letter-spacing:.1em; text-transform:uppercase;
+    color:rgba(240,230,215,.42);
+    text-align:center;
+  }
+  .hint kbd{
+    font-family:inherit; font-size:.92em;
+    padding:2px 6px; border-radius:4px;
+    background:rgba(246,236,221,.1);
+    box-shadow:inset 0 0 0 1px rgba(246,236,221,.16);
+  }
+
+  .site-foot{
+    padding:22px clamp(16px,4vw,40px) 30px;
+    border-top:1px solid rgba(246,236,221,.1);
+    font-size:.76rem;
+    color:rgba(240,230,215,.4);
+  }
+  .site-foot__inner{ max-width:var(--shell); margin:0 auto; display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+  .site-foot a{ text-decoration:none; border-bottom:1px solid rgba(240,230,215,.2); padding-bottom:1px; }
+  .site-foot a:hover{ color:#fff; border-color:var(--buddy); }
+
+  @media (max-width:560px){
+    .topnav{ font-size:.62rem; gap:12px; letter-spacing:.1em; }
+    .hint{ font-size:.68rem; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#game">Skip to the game</a>
+
+<header class="topbar">
+  <a class="wordmark" href="../index.html"><span class="wordmark__dot"></span>Buddy&rsquo;s Burrow</a>
+  <nav class="topnav" aria-label="Sections">
+    <a href="../index.html#story">The story</a>
+    <a href="../index.html#friends">Friends</a>
+    <a href="../app/index.html">The app</a>
+  </nav>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Buddy&rsquo;s Run</p>
+      <h1>Hop the logs. Catch the acorns.</h1>
+      <p class="lede">Tap to hop, tap again in mid-air to boost. Catch acorns in a row for a combo, and grab the stars up high &mdash; those need both jumps.</p>
+    </div>
+
+    <div class="stage" id="game">
+      <canvas id="c" aria-label="Buddy's Run game"></canvas>
+
+      <div class="hud">
+        <div class="hud__score">🌰 <b id="score">0</b></div>
+        <div class="hud__right">
+          <div class="hearts" id="hearts"><span class="on">♥</span><span class="on">♥</span><span class="on">♥</span></div>
+          <div class="combo" id="combo">Combo ×1</div>
+        </div>
+      </div>
+
+      <div class="bubble" id="bubble"></div>
+
+      <div class="overlay on" id="startOverlay">
+        <div class="card">
+          <h2>Buddy&rsquo;s Run</h2>
+          <p>Tap anywhere to hop. Tap again in mid-air to boost. Logs and bees cost a heart &mdash; you have three.</p>
+          <button class="btn" id="startBtn">Start running</button>
+        </div>
+      </div>
+
+      <div class="overlay" id="questionOverlay">
+        <div class="card">
+          <h2 id="qPrompt">Coffee or tea?</h2>
+          <div class="choices" id="qChoices"></div>
+        </div>
+      </div>
+
+      <div class="overlay" id="overOverlay">
+        <div class="card">
+          <h2>Nice run.</h2>
+          <p>You caught <span class="big" id="finalScore">0</span> acorns.<br>Best so far: <span id="bestScore">0</span>.</p>
+          <button class="btn" id="againBtn">Run again</button>
+          <a class="btn btn--ghost" href="../index.html">Back to the burrow</a>
+        </div>
+      </div>
+    </div>
+
+    <p class="hint">Tap, click, or press <kbd>Space</kbd> to hop</p>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="site-foot__inner">
+    <span>Buddy&rsquo;s Run &mdash; a small game from <a href="../index.html">Buddy&rsquo;s Burrow</a>.</span>
+    <span>Made by Joseph Khan.</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  "use strict";
+
+  // ── Logical stage. Physics numbers are lifted from ios/BuddyRunGame.swift ──
+  const W = 390, H = 360;
+  const GROUND = H - 52;
+  const BUDDY_X = 96, BUDDY_SIZE = 88;
+  const GRAVITY = 1500, HOP_V = 640, BOOST_V = 600;
+  const SPEED_START = 150, SPEED_TOP = 300, SPEED_GAIN = 1.0;
+  const MAX_HEARTS = 3;
+  const CATCH = 46;
+
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const scoreEl = document.getElementById("score");
+  const heartsEl = document.getElementById("hearts");
+  const comboEl = document.getElementById("combo");
+  const bubbleEl = document.getElementById("bubble");
+  const startOverlay = document.getElementById("startOverlay");
+  const questionOverlay = document.getElementById("questionOverlay");
+  const overOverlay = document.getElementById("overOverlay");
+  const qPrompt = document.getElementById("qPrompt");
+  const qChoices = document.getElementById("qChoices");
+  const finalScore = document.getElementById("finalScore");
+  const bestScoreEl = document.getElementById("bestScore");
+
+  // ── Sprites ──
+  const SPRITES = {};
+  const SPRITE_FILES = {
+    run1: "img/BuddyRun1.png",
+    run2: "img/BuddyRun2.png",
+    run15: "img/BuddyRun15.png",
+    leap: "img/BuddyRunLeap.png",
+    ready: "img/BuddyRunReady.png",
+    jump: "img/BuddyJump.png",
+    boost: "img/BuddyBoost.png",
+    cheer: "img/BuddyCheer.png",
+    bump: "img/BuddyBump.png",
+    pip: "img/FriendPip.png",
+    clover: "img/FriendClover.png",
+    bristle: "img/FriendBristle.png",
+    shelly: "img/FriendShelly.png",
+    waddles: "img/FriendWaddles.png"
+  };
+  let loaded = 0;
+  const total = Object.keys(SPRITE_FILES).length;
+  for (const [k, src] of Object.entries(SPRITE_FILES)) {
+    const img = new Image();
+    img.onload = img.onerror = () => { loaded++; };
+    img.src = src;
+    SPRITES[k] = img;
+  }
+
+  // ── Content ──
+  const QUESTIONS = [
+    { prompt: "Coffee or tea?", a: ["☕", "Coffee"], b: ["🍵", "Tea"] },
+    { prompt: "Party or couch?", a: ["🎉", "Party"], b: ["🛋️", "Couch"] },
+    { prompt: "Night owl or early bird?", a: ["🦉", "Night owl"], b: ["🐓", "Early bird"] },
+    { prompt: "Beach or mountains?", a: ["🏖️", "Beach"], b: ["🏔️", "Mountains"] },
+    { prompt: "Memes or puns?", a: ["😂", "Memes"], b: ["🤓", "Puns"] }
+  ];
+
+  const FRIENDS = [
+    { key: "pip", line: "That's Pip, my neighbour! Hi Pip! 🐿️" },
+    { key: "clover", line: "Hey Clover! She's the fastest in the forest 🐇" },
+    { key: "bristle", line: "That's Bristle. Don't hug him 😅🦔" },
+    { key: "shelly", line: "Shelly's been walking to the lake since Tuesday 🐢" },
+    { key: "waddles", line: "Waddles insists he's not lost. He's lost 🦆" }
+  ];
+
+  const LINES = [
+    "Tap to hop! Tap again in the air to boost 🚀",
+    "Catch acorns in a row for a combo ✨",
+    "Stars are up high — you'll need both jumps ⭐",
+    "Logs on the ground, bees in the air. Stay low or boost over 🐝",
+    "No ads here. Ever. You're not the product 💜",
+    "I live only on your phone. No cloud, just us 🤫",
+    "Airplane mode? No problem. I work totally offline ✈️",
+    "Honeybees can learn to recognize human faces 🐝"
+  ];
+
+  // ── State ──
+  const S = {
+    running: false,
+    over: false,
+    paused: false,
+    t: 0,
+    speed: SPEED_START,
+    height: 0,
+    vel: 0,
+    jumps: 0,
+    squash: 0,
+    boost: 0,
+    hurt: 0,
+    acorns: 0,
+    combo: 0,
+    hearts: MAX_HEARTS,
+    items: [],
+    nextAcorn: 1.2,
+    nextStar: 11,
+    nextFriend: 16,
+    nextObstacle: 6,
+    nextQuestion: 12,
+    questions: [],
+    bubble: null,
+    bubbleUntil: 0,
+    nextBubble: 2.5,
+    scroll: 0
+  };
+
+  let best = 0;
+  try { best = parseInt(localStorage.getItem("buddyRunBest") || "0", 10) || 0; } catch (e) { best = 0; }
+
+  const multiplier = () => Math.min(5, 1 + Math.floor(S.combo / 5));
+
+  function reset() {
+    S.running = true; S.over = false; S.paused = false;
+    S.t = 0; S.speed = SPEED_START;
+    S.height = 0; S.vel = 0; S.jumps = 0;
+    S.squash = 0; S.boost = 0; S.hurt = 0;
+    S.acorns = 0; S.combo = 0; S.hearts = MAX_HEARTS;
+    S.items = [];
+    S.nextAcorn = 1.2; S.nextStar = 11; S.nextFriend = 16;
+    S.nextObstacle = 6; S.nextQuestion = 12;
+    S.questions = QUESTIONS.slice().sort(() => Math.random() - 0.5);
+    S.bubble = null; S.bubbleUntil = 0; S.nextBubble = 2.5;
+    S.scroll = 0;
+    startOverlay.classList.remove("on");
+    overOverlay.classList.remove("on");
+    questionOverlay.classList.remove("on");
+    hideBubble();
+    syncHud();
+  }
+
+  function hop() {
+    if (!S.running || S.paused || S.over) return;
+    if (S.height <= 0.5) {
+      S.vel = HOP_V; S.jumps = 1;
+    } else if (S.jumps === 1) {
+      S.vel = BOOST_V; S.jumps = 2; S.boost = 0.45;
+    }
+  }
+
+  function say(text, secs) {
+    S.bubble = text;
+    S.bubbleUntil = S.t + secs;
+    bubbleEl.textContent = text;
+    bubbleEl.classList.add("on");
+  }
+  function hideBubble() {
+    S.bubble = null;
+    bubbleEl.classList.remove("on");
+  }
+
+  function syncHud() {
+    scoreEl.textContent = S.acorns;
+    const hs = heartsEl.children;
+    for (let i = 0; i < hs.length; i++) hs[i].classList.toggle("on", i < S.hearts);
+    const m = multiplier();
+    comboEl.textContent = "Combo ×" + m;
+    comboEl.classList.toggle("on", m > 1);
+  }
+
+  // ── Update ──
+  function step(dt) {
+    S.squash = Math.max(0, S.squash - dt);
+    S.boost = Math.max(0, S.boost - dt);
+    S.hurt = Math.max(0, S.hurt - dt);
+
+    if (!S.running || S.paused || S.over) return;
+
+    S.t += dt;
+    S.speed = Math.min(SPEED_TOP, SPEED_START + S.t * SPEED_GAIN);
+    S.scroll += S.speed * dt;
+
+    // physics
+    if (S.height > 0 || S.vel > 0) {
+      S.vel -= GRAVITY * dt;
+      S.height += S.vel * dt;
+      if (S.height <= 0) {
+        S.height = 0; S.vel = 0; S.jumps = 0; S.squash = 0.12;
+      }
+    }
+
+    const center = S.height + BUDDY_SIZE / 2;
+
+    for (const it of S.items) {
+      it.x -= S.speed * dt;
+      if (it.done) continue;
+      const dx = Math.abs(it.x - BUDDY_X);
+
+      if (it.kind === "acorn" || it.kind === "star") {
+        if (dx < CATCH && Math.abs(it.h - center) < CATCH) {
+          it.done = true;
+          S.combo += 1;
+          if (it.kind === "star") {
+            S.acorns += 5 * multiplier();
+            say("Nice catch! ⭐ +" + (5 * multiplier()), 1.5);
+          } else {
+            S.acorns += multiplier();
+          }
+          syncHud();
+        } else if (it.kind === "acorn" && !it.missed && it.x < BUDDY_X - CATCH) {
+          it.missed = true;
+          S.combo = 0;
+          syncHud();
+        }
+      } else if (it.kind === "log" || it.kind === "bee") {
+        if (S.hurt > 0) continue;
+        if (hits(it)) {
+          it.done = true;
+          S.hearts -= 1;
+          S.combo = 0;
+          S.hurt = 1.2;
+          syncHud();
+          if (S.hearts <= 0) { gameOver(); return; }
+          say(S.hearts === 1 ? "Ouch! Last heart! 😬" : "Ouch! 😵", 1.2);
+        }
+      } else if (it.kind === "friend") {
+        if (it.x < W * 0.6) {
+          it.done = true;
+          const f = FRIENDS.find(f => f.key === it.friend);
+          if (f) say(f.line, 3);
+        }
+      }
+    }
+    S.items = S.items.filter(it => it.x > -90);
+
+    spawn();
+    updateBubble();
+
+    if (S.t >= S.nextQuestion && S.questions.length && S.height < 90) {
+      askQuestion(S.questions.shift());
+    }
+  }
+
+  function hits(it) {
+    if (Math.abs(it.x - BUDDY_X) >= 34) return false;
+    if (it.kind === "log") return S.height < 30;
+    return S.height + 70 > it.h - 18 && S.height < it.h + 18;
+  }
+
+  function spawn() {
+    const x = W + 60;
+    const quiet = !!S.bubble;
+
+    if (S.t >= S.nextAcorn && !quiet) {
+      if (Math.random() < 0.34) {
+        [40, 90, 125, 90, 40].forEach((h, k) => {
+          S.items.push({ x: x + k * 42, h, kind: "acorn", done: false, missed: false });
+        });
+        S.nextAcorn = S.t + 420 / S.speed;
+      } else {
+        const h = [30, 30, 100, 120][Math.floor(Math.random() * 4)];
+        S.items.push({ x, h, kind: "acorn", done: false, missed: false });
+        S.nextAcorn = S.t + (1.0 + Math.random() * 0.8) * (SPEED_START / S.speed);
+      }
+    }
+
+    if (S.t >= S.nextObstacle) {
+      const bee = S.t > 20 && Math.random() < 0.5;
+      S.items.push({
+        x, h: bee ? 115 + Math.random() * 35 : 0,
+        kind: bee ? "bee" : "log", done: false, missed: false
+      });
+      S.nextObstacle = S.t + (520 + Math.random() * 340) / S.speed;
+    }
+
+    if (S.t >= S.nextStar && !quiet) {
+      S.items.push({ x, h: 230, kind: "star", done: false, missed: false });
+      S.nextStar = S.t + 10 + Math.random() * 6;
+    }
+
+    if (S.t >= S.nextFriend) {
+      const f = FRIENDS[Math.floor(Math.random() * FRIENDS.length)];
+      S.items.push({ x, h: 0, kind: "friend", friend: f.key, done: false, missed: false });
+      S.nextFriend = S.t + 16 + Math.random() * 8;
+    }
+  }
+
+  function updateBubble() {
+    if (S.bubble && S.t > S.bubbleUntil) hideBubble();
+    if (!S.bubble && S.t >= S.nextBubble) {
+      say(LINES[Math.floor(Math.random() * LINES.length)], 3.4);
+      S.nextBubble = S.t + 9 + Math.random() * 5;
+    }
+  }
+
+  function askQuestion(q) {
+    S.paused = true;
+    hideBubble();
+    qPrompt.textContent = q.prompt;
+    qChoices.innerHTML = "";
+    [q.a, q.b].forEach(([emoji, label]) => {
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.innerHTML = '<span>' + emoji + "</span>" + label;
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        questionOverlay.classList.remove("on");
+        S.paused = false;
+        S.nextQuestion = S.t + 40;
+        say("Noted! 💜", 1.6);
+      });
+      qChoices.appendChild(b);
+    });
+    questionOverlay.classList.add("on");
+  }
+
+  function gameOver() {
+    S.over = true;
+    S.running = false;
+    hideBubble();
+    if (S.acorns > best) {
+      best = S.acorns;
+      try { localStorage.setItem("buddyRunBest", String(best)); } catch (e) {}
+    }
+    finalScore.textContent = S.acorns;
+    bestScoreEl.textContent = best;
+    overOverlay.classList.add("on");
+  }
+
+  // ── Draw ──
+  function draw() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#1a1226");
+    g.addColorStop(0.55, "#241a2e");
+    g.addColorStop(1, "#120d10");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // moon
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    const mg = ctx.createRadialGradient(318, 52, 4, 318, 52, 46);
+    mg.addColorStop(0, "rgba(255,244,214,.85)");
+    mg.addColorStop(1, "rgba(255,244,214,0)");
+    ctx.fillStyle = mg;
+    ctx.beginPath(); ctx.arc(318, 52, 46, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    // far trees (slow parallax)
+    drawTrees(S.scroll * 0.18, 0.16, 62, "#1b1424");
+    drawTrees(S.scroll * 0.42, 0.26, 44, "#241a2c");
+
+    // ground
+    ctx.fillStyle = "#1d1512";
+    ctx.fillRect(0, GROUND, W, H - GROUND);
+    ctx.fillStyle = "#2a1f19";
+    ctx.fillRect(0, GROUND, W, 3);
+
+    // grass tufts
+    ctx.strokeStyle = "rgba(120,150,90,.35)";
+    ctx.lineWidth = 1.5;
+    const off = (S.scroll * 0.9) % 26;
+    for (let x = -off; x < W + 26; x += 26) {
+      ctx.beginPath();
+      ctx.moveTo(x, GROUND);
+      ctx.lineTo(x + 3, GROUND - 7);
+      ctx.moveTo(x + 6, GROUND);
+      ctx.lineTo(x + 4, GROUND - 5);
+      ctx.stroke();
+    }
+
+    // items
+    for (const it of S.items) {
+      if (it.done) continue;
+      const y = GROUND - it.h;
+      if (it.kind === "acorn") drawAcorn(it.x, y);
+      else if (it.kind === "star") drawStar(it.x, y);
+      else if (it.kind === "log") drawLog(it.x, y);
+      else if (it.kind === "bee") drawBee(it.x, y, S.t);
+      else if (it.kind === "friend") drawFriend(it.x, y, it.friend);
+    }
+
+    drawBuddy();
+  }
+
+  function drawTrees(offset, alpha, spacing, color) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    const start = -((offset % spacing) + spacing);
+    for (let x = start; x < W + spacing; x += spacing) {
+      const h = 70 + ((Math.floor((x + offset) / spacing) * 37) % 40);
+      ctx.beginPath();
+      ctx.moveTo(x, GROUND);
+      ctx.lineTo(x + spacing * 0.5, GROUND - h);
+      ctx.lineTo(x + spacing, GROUND);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawAcorn(x, y) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = "#c98a4b";
+    ctx.beginPath();
+    ctx.ellipse(0, 2, 8, 9.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#8a5a2b";
+    ctx.beginPath();
+    ctx.ellipse(0, -6, 8.5, 4.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#6d4520";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(0, -10); ctx.lineTo(0, -14);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawStar(x, y) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.sin(S.t * 2) * 0.12);
+    ctx.fillStyle = "#ffd66b";
+    ctx.shadowColor = "rgba(255,214,107,.7)";
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 ? 5 : 12;
+      const a = (Math.PI / 5) * i - Math.PI / 2;
+      ctx[i ? "lineTo" : "moveTo"](Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawLog(x, y) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = "#5a3d24";
+    ctx.beginPath();
+    ctx.roundRect(-16, -13, 32, 13, 5);
+    ctx.fill();
+    ctx.fillStyle = "#7a5533";
+    ctx.beginPath();
+    ctx.ellipse(16, -6.5, 4, 6.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,.25)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-10, -9); ctx.lineTo(8, -9);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBee(x, y, t) {
+    ctx.save();
+    ctx.translate(x, y + Math.sin(t * 6) * 3);
+    ctx.fillStyle = "rgba(255,255,255,.5)";
+    ctx.beginPath();
+    ctx.ellipse(-2, -7, 6, 4, -0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#e9b93e";
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 9, 6.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#2a1f19";
+    ctx.fillRect(-3, -6.5, 2.5, 13);
+    ctx.fillRect(2, -6, 2.5, 12);
+    ctx.restore();
+  }
+
+  function drawFriend(x, y, key) {
+    const img = SPRITES[key];
+    if (!img || !img.complete || !img.naturalWidth) return;
+    const size = 46;
+    ctx.save();
+    ctx.globalAlpha = 0.95;
+    ctx.drawImage(img, x - size / 2, y - size, size, size);
+    ctx.restore();
+  }
+
+  function drawBuddy() {
+    let key = "run1";
+    if (S.over) key = "cheer";
+    else if (S.hurt > 0) key = "bump";
+    else if (S.boost > 0) key = "boost";
+    else if (S.height > 0.5) key = S.vel > 0 ? "jump" : "leap";
+    else {
+      const frame = Math.floor(S.t * 9) % 3;
+      key = frame === 0 ? "run1" : frame === 1 ? "run2" : "run15";
+    }
+
+    const img = SPRITES[key];
+    const size = BUDDY_SIZE;
+    const bottom = GROUND - S.height;
+    const squash = S.squash > 0 ? 1 - S.squash * 0.6 : 1;
+    const sy = squash, sx = 1 + (1 - squash) * 0.5;
+
+    ctx.save();
+    ctx.translate(BUDDY_X, bottom);
+    ctx.scale(sx, sy);
+    if (img && img.complete && img.naturalWidth) {
+      ctx.drawImage(img, -size / 2, -size, size, size);
+    } else {
+      ctx.fillStyle = "#8f72c9";
+      ctx.beginPath();
+      ctx.arc(0, -size / 2, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // shadow
+    ctx.save();
+    ctx.globalAlpha = 0.28 * Math.max(0.25, 1 - S.height / 260);
+    ctx.fillStyle = "#000";
+    ctx.beginPath();
+    ctx.ellipse(BUDDY_X, GROUND + 2, 26, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ── Loop ──
+  let last = 0;
+  function frame(now) {
+    if (!last) last = now;
+    let dt = (now - last) / 1000;
+    last = now;
+    if (dt > 0.05) dt = 0.05;
+    step(dt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  // ── Sizing ──
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = canvas.getBoundingClientRect();
+    const cssW = rect.width || W;
+    const cssH = cssW * (H / W);
+    canvas.style.height = cssH + "px";
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    ctx.setTransform(dpr * (cssW / W), 0, 0, dpr * (cssW / W), 0, 0);
+  }
+  window.addEventListener("resize", resize);
+
+  // ── Input ──
+  const stage = document.getElementById("game");
+  stage.addEventListener("pointerdown", (e) => {
+    if (e.target.closest(".overlay.on")) return;
+    hop();
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "Space" || e.code === "ArrowUp") {
+      if (e.target.closest("button, a")) return;
+      e.preventDefault();
+      // Don't let Space re-trigger a focused button after a run ends.
+      if (S.over || S.paused) return;
+      hop();
+    }
+  });
+
+  document.getElementById("startBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    reset();
+  });
+  document.getElementById("againBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    reset();
+  });
+
+  // ── Go ──
+  resize();
+  syncHud();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
