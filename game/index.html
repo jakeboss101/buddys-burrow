@@ -82,7 +82,8 @@
   .stage{
     position:relative;
     width:100%;
-    max-width:760px;
+    /* Portrait like the app: never taller than the window. */
+    max-width:min(420px, calc((100svh - 120px) * 390 / 690));
     margin:0 auto;
     border-radius:14px;
     overflow:hidden;
@@ -253,8 +254,8 @@
   "use strict";
 
   // ── Logical stage. Physics numbers are lifted from ios/BuddyRunGame.swift ──
-  const W = 390, H = 360;
-  const GROUND = H - 52;
+  const W = 390, H = 690;                 // portrait, a phone's shape
+  const GROUND = Math.round(H * 0.7);     // the app's ground line: 70% down
   const BUDDY_X = 150, BUDDY_SIZE = 88;   // room behind him for the friends following along
   const GRAVITY = 1500, HOP_V = 640, BOOST_V = 600;
   const SPEED_START = 150, SPEED_TOP = 300, SPEED_GAIN = 1.0;
