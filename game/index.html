@@ -101,7 +101,7 @@
     font-size:clamp(.72rem,1.5vw,.86rem);
     font-weight:600; letter-spacing:.06em;
   }
-  .hud__score{ display:flex; align-items:center; gap:8px; color:#fbf4e7; text-shadow:0 2px 10px rgba(0,0,0,.8); }
+  .hud__score{ display:flex; align-items:center; gap:8px; color:#2a1d4a; text-shadow:0 1px 0 rgba(255,255,255,.6); }
   .hud__score b{ font-size:1.25em; font-variant-numeric:tabular-nums; }
   .hud__right{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
   .hearts{ display:flex; gap:4px; font-size:1.05em; letter-spacing:0; }
@@ -255,7 +255,7 @@
   // ── Logical stage. Physics numbers are lifted from ios/BuddyRunGame.swift ──
   const W = 390, H = 360;
   const GROUND = H - 52;
-  const BUDDY_X = 96, BUDDY_SIZE = 88;
+  const BUDDY_X = 150, BUDDY_SIZE = 88;   // room behind him for the friends following along
   const GRAVITY = 1500, HOP_V = 640, BOOST_V = 600;
   const SPEED_START = 150, SPEED_TOP = 300, SPEED_GAIN = 1.0;
   const MAX_HEARTS = 3;
@@ -321,8 +321,13 @@
     nextStar: 11,
     nextFriend: 16,
     nextObstacle: 6,
-    scroll: 0
+    scroll: 0,
+    followers: []
   };
+
+  // Friends Buddy reaches line up behind him (newest closest), as in the app.
+  const MAX_FOLLOWERS = 3, FRIEND_SIZE = 58, FOLLOW_GAP = FRIEND_SIZE * 0.75 + 8;
+  const FOLLOW_TIME = 5;   // seconds a friend runs with Buddy before dropping back
 
   let best = 0;
   try { best = parseInt(localStorage.getItem("buddyRunBest") || "0", 10) || 0; } catch (e) { best = 0; }
@@ -339,6 +344,7 @@
     S.nextAcorn = 1.2; S.nextStar = 11; S.nextFriend = 16;
     S.nextObstacle = 6;
     S.scroll = 0;
+    S.followers = [];
     startOverlay.classList.remove("on");
     overOverlay.classList.remove("on");
     syncHud();
@@ -383,6 +389,16 @@
       }
     }
 
+    S.followers.forEach((f, i) => {
+      if (S.t - f.joined > FOLLOW_TIME) {
+        f.x -= S.speed * dt;   // stops running; the world carries them off behind
+      } else {
+        const slot = BUDDY_X - 42 - i * FOLLOW_GAP;
+        f.x += (slot - f.x) * Math.min(1, dt * 6);
+      }
+    });
+    S.followers = S.followers.filter(f => f.x > -FRIEND_SIZE);
+
     const center = S.height + BUDDY_SIZE / 2;
 
     for (const it of S.items) {
@@ -416,7 +432,14 @@
           if (S.hearts <= 0) { gameOver(); return; }
         }
       } else if (it.kind === "friend") {
-        if (it.x < W * 0.6) it.done = true;
+        // Running into a friend: they join Buddy and follow along (worth 10 acorns, like the app).
+        if (dx < 40) {
+          it.done = true;
+          S.acorns += 10 * multiplier();
+          S.followers.unshift({ key: it.friend, x: it.x, joined: S.t });
+          if (S.followers.length > MAX_FOLLOWERS) S.followers.pop();
+          syncHud();
+        }
       }
     }
     S.items = S.items.filter(it => it.x > -90);
@@ -479,77 +502,90 @@
     overOverlay.classList.add("on");
   }
 
-  // ── Draw ──
+  // ── Draw ── (the app's forest: ios/BuddyRunGame.swift, Zone.forest)
+  const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+
+  // An emoji centred on (x, y); flip turns it to face Buddy.
+  function emoji(ch, x, y, size, flip, alpha) {
+    ctx.save();
+    ctx.translate(x, y);
+    if (flip) ctx.scale(-1, 1);
+    if (alpha !== undefined) ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#000";
+    ctx.font = size + "px " + EMOJI_FONT;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(ch, 0, 0);
+    ctx.restore();
+  }
+
+  function friendArt(key, x, bottom, flip) {
+    const img = SPRITES[key];
+    if (!img || !img.complete || !img.naturalWidth) return;
+    ctx.save();
+    ctx.translate(x, bottom);
+    if (flip) ctx.scale(-1, 1);
+    ctx.drawImage(img, -FRIEND_SIZE / 2, -FRIEND_SIZE, FRIEND_SIZE, FRIEND_SIZE);
+    ctx.restore();
+  }
+
   function draw() {
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, "#1a1226");
-    g.addColorStop(0.55, "#241a2e");
-    g.addColorStop(1, "#120d10");
+    const t = S.t;
+
+    // sky
+    const g = ctx.createLinearGradient(0, 0, 0, GROUND);
+    g.addColorStop(0, "#B9A6FF");
+    g.addColorStop(1, "#F3EEFF");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    // moon
-    ctx.save();
-    ctx.globalAlpha = 0.5;
-    const mg = ctx.createRadialGradient(318, 52, 4, 318, 52, 46);
-    mg.addColorStop(0, "rgba(255,244,214,.85)");
-    mg.addColorStop(1, "rgba(255,244,214,0)");
-    ctx.fillStyle = mg;
-    ctx.beginPath(); ctx.arc(318, 52, 46, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-
-    // far trees (slow parallax)
-    drawTrees(S.scroll * 0.18, 0.16, 62, "#1b1424");
-    drawTrees(S.scroll * 0.42, 0.26, 44, "#241a2c");
-
-    // ground
-    ctx.fillStyle = "#1d1512";
-    ctx.fillRect(0, GROUND, W, H - GROUND);
-    ctx.fillStyle = "#2a1f19";
-    ctx.fillRect(0, GROUND, W, 3);
-
-    // grass tufts
-    ctx.strokeStyle = "rgba(120,150,90,.35)";
-    ctx.lineWidth = 1.5;
-    const off = (S.scroll * 0.9) % 26;
-    for (let x = -off; x < W + 26; x += 26) {
-      ctx.beginPath();
-      ctx.moveTo(x, GROUND);
-      ctx.lineTo(x + 3, GROUND - 7);
-      ctx.moveTo(x + 6, GROUND);
-      ctx.lineTo(x + 4, GROUND - 5);
-      ctx.stroke();
+    // clouds drift slowly
+    const cloudShift = (t * 12) % 220;
+    for (let i = 0; i < Math.ceil(W / 220) + 2; i++) {
+      emoji("☁️", i * 220 - cloudShift + 22, GROUND * 0.3 + (i % 2) * 40 + 22, 44, false, 0.85);
     }
+
+    // trees behind, scrolling slower than the ground
+    const trees = ["🌳", "🌲", "🌲"];
+    const backShift = (t * 45) % 140;
+    for (let i = 0; i < Math.ceil(W / 140) + 2; i++) {
+      emoji(trees[i % 3], i * 140 - backShift + 27, GROUND - 54 * 1.15 + 27, 54, false, 0.55);
+    }
+
+    // butterflies
+    const loop = W + 160;
+    for (let i = 0; i < 2; i++) {
+      const x = W + 80 - ((t * 55 + i * 260) % loop);
+      const y = GROUND * (0.42 + 0.12 * i) + Math.sin(t * 1.7 + i * 2) * 24;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(0.55 + 0.45 * Math.abs(Math.sin(t * 11 + i)), 1);   // wing flap
+      emoji("🦋", 0, 0, 28);
+      ctx.restore();
+    }
+
+    // grass
+    const gg = ctx.createLinearGradient(0, GROUND, 0, H);
+    gg.addColorStop(0, "#9CCC65");
+    gg.addColorStop(1, "#7CB342");
+    ctx.fillStyle = gg;
+    ctx.fillRect(0, GROUND, W, H - GROUND);
 
     // items
     for (const it of S.items) {
       if (it.done) continue;
-      const y = GROUND - it.h;
-      if (it.kind === "acorn") drawAcorn(it.x, y);
-      else if (it.kind === "star") drawStar(it.x, y);
-      else if (it.kind === "log") drawLog(it.x, y);
-      else if (it.kind === "bee") drawBee(it.x, y, S.t);
-      else if (it.kind === "friend") drawFriend(it.x, y, it.friend);
+      if (it.kind === "acorn") drawAcorn(it.x, GROUND - it.h);
+      else if (it.kind === "star") emoji("⭐", it.x, GROUND - it.h, 34);
+      else if (it.kind === "log") drawLog(it.x, GROUND);
+      else if (it.kind === "bee") emoji("🐝", it.x, GROUND - it.h + Math.sin(t * 8 + it.x / 40) * 4, 58, true);
+      else if (it.kind === "friend") {
+        // waiting, a little scared, looking back at Buddy
+        friendArt(it.friend, it.x + Math.sin(t * 30) * 2, GROUND + 2, true);
+      }
     }
 
+    drawFollowers();
     drawBuddy();
-  }
-
-  function drawTrees(offset, alpha, spacing, color) {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = color;
-    const start = -((offset % spacing) + spacing);
-    for (let x = start; x < W + spacing; x += spacing) {
-      const h = 70 + ((Math.floor((x + offset) / spacing) * 37) % 40);
-      ctx.beginPath();
-      ctx.moveTo(x, GROUND);
-      ctx.lineTo(x + spacing * 0.5, GROUND - h);
-      ctx.lineTo(x + spacing, GROUND);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.restore();
   }
 
   function drawAcorn(x, y) {
@@ -571,23 +607,6 @@
     ctx.restore();
   }
 
-  function drawStar(x, y) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(Math.sin(S.t * 2) * 0.12);
-    ctx.fillStyle = "#ffd66b";
-    ctx.shadowColor = "rgba(255,214,107,.7)";
-    ctx.shadowBlur = 14;
-    ctx.beginPath();
-    for (let i = 0; i < 10; i++) {
-      const r = i % 2 ? 5 : 12;
-      const a = (Math.PI / 5) * i - Math.PI / 2;
-      ctx[i ? "lineTo" : "moveTo"](Math.cos(a) * r, Math.sin(a) * r);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
 
   function drawLog(x, y) {
     ctx.save();
@@ -608,31 +627,15 @@
     ctx.restore();
   }
 
-  function drawBee(x, y, t) {
-    ctx.save();
-    ctx.translate(x, y + Math.sin(t * 6) * 3);
-    ctx.fillStyle = "rgba(255,255,255,.5)";
-    ctx.beginPath();
-    ctx.ellipse(-2, -7, 6, 4, -0.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#e9b93e";
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 9, 6.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#2a1f19";
-    ctx.fillRect(-3, -6.5, 2.5, 13);
-    ctx.fillRect(2, -6, 2.5, 12);
-    ctx.restore();
-  }
 
-  function drawFriend(x, y, key) {
-    const img = SPRITES[key];
-    if (!img || !img.complete || !img.naturalWidth) return;
-    const size = 46;
-    ctx.save();
-    ctx.globalAlpha = 0.95;
-    ctx.drawImage(img, x - size / 2, y - size, size, size);
-    ctx.restore();
+  // Friends trailing behind Buddy, newest closest, bobbing as they run.
+  function drawFollowers() {
+    S.followers.forEach((f, i) => {
+      const leaving = S.t - f.joined > FOLLOW_TIME;
+      // Running: a small bob. Dropped back: hopping for joy as Buddy runs on.
+      const bob = !S.running ? 0 : leaving ? Math.abs(Math.sin(S.t * 7 + i)) * 10 : Math.abs(Math.sin(S.t * 9 + i)) * 5;
+      friendArt(f.key, f.x, GROUND + 2 - bob, false);
+    });
   }
 
   function drawBuddy() {
