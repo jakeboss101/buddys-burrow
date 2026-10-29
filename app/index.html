@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buddy: Your AI Friend — a fuzzy purple friend who lives on your iPhone</title>
+<meta name="description" content="Buddy: Your AI Friend is a small purple creature who lives on your iPhone. He keeps notes and reminders, remembers what matters, reads pages you save, and tells you his story a chapter at a time. Free, no account, no ads, no subscription.">
+<meta name="theme-color" content="#100c0a">
+<meta property="og:site_name" content="Buddy's Burrow">
+<meta property="og:title" content="Buddy: Your AI Friend">
+<meta property="og:description" content="A fuzzy purple friend who lives on your iPhone. Free, no account, no ads, no subscription.">
+<meta property="og:image" content="https://buddysburrow.com/img/hero.jpg">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://buddysburrow.com/app">
+<link rel="icon" href="../img/icon.png">
+<link rel="apple-touch-icon" href="../img/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Instrument+Sans:ital,wght@0,400..700;1,400..600&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#221a13;
+    --ink-soft:#5f4d3e;
+    --ink-faint:#8d7a68;
+    --paper:#f7f0e2;
+    --paper-deep:#efe3cd;
+    --night:#100c0a;
+    --night-soft:#1c1512;
+    --amber:#e9a24e;
+    --amber-deep:#a9631d;
+    --buddy:#8f72c9;
+    --buddy-deep:#5c3f96;
+    --shell:1180px;
+    --ease:cubic-bezier(.19,.72,.22,1);
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+
+  html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+  @media (prefers-reduced-motion:reduce){ html{ scroll-behavior:auto; } }
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    overflow-x:hidden;
+  }
+
+  ::selection{ background:rgba(143,114,201,.28); }
+  a{ color:inherit; }
+  :focus-visible{ outline:2px solid var(--buddy-deep); outline-offset:3px; border-radius:2px; }
+
+  h1,h2,h3{
+    font-family:"Fraunces",Georgia,"Times New Roman",serif;
+    font-weight:400;
+    font-variation-settings:"SOFT" 24,"WONK" 1;
+    letter-spacing:-.022em;
+    text-wrap:balance;
+    margin:0;
+  }
+  p{ text-wrap:pretty; }
+
+  .shell{ width:100%; max-width:var(--shell); margin-inline:auto; padding-inline:clamp(20px,5vw,44px); }
+
+  .skip{ position:absolute; left:-9999px; top:0; z-index:99; background:var(--paper); color:var(--ink); padding:12px 18px; border-radius:0 0 8px 0; }
+  .skip:focus{ left:0; }
+
+  .eyebrow{
+    display:flex; align-items:center; gap:12px;
+    margin:0 0 20px;
+    font-size:.68rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--amber-deep);
+  }
+  .eyebrow::before{ content:""; width:34px; height:1px; background:currentColor; opacity:.8; flex:none; }
+  .eyebrow--light{ color:var(--amber); }
+  .eyebrow--bare::before{ display:none; }
+
+  .lede{ font-size:clamp(1.05rem,1.55vw,1.2rem); line-height:1.62; color:var(--ink-soft); max-width:34em; }
+  .lede--light{ color:rgba(240,230,215,.72); }
+
+  .js [data-reveal]{
+    opacity:0; transform:translateY(20px);
+    transition:opacity .9s var(--ease), transform .9s var(--ease);
+    transition-delay:var(--d,0ms);
+  }
+  .js [data-reveal].in{ opacity:1; transform:none; }
+  @media (prefers-reduced-motion:reduce){
+    .js [data-reveal]{ opacity:1; transform:none; transition:none; }
+  }
+
+  .grain{
+    position:fixed; inset:0; z-index:60; pointer-events:none;
+    opacity:.5; mix-blend-mode:soft-light;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:absolute; top:0; left:0; right:0; z-index:5;
+    padding-top:clamp(20px,3.4vw,34px);
+  }
+  .topbar__inner{ display:flex; align-items:baseline; justify-content:space-between; gap:24px; flex-wrap:wrap; }
+  .wordmark{
+    font-family:"Fraunces",Georgia,serif;
+    font-size:1.02rem;
+    font-variation-settings:"SOFT" 40,"WONK" 1;
+    text-decoration:none; color:#f6ecdd;
+    display:inline-flex; align-items:center; gap:9px;
+  }
+  .wordmark__dot{ width:8px; height:8px; border-radius:50%; background:var(--buddy); box-shadow:0 0 0 4px rgba(143,114,201,.18); }
+  .topnav{ display:flex; gap:clamp(16px,2.4vw,30px); font-size:.74rem; letter-spacing:.16em; text-transform:uppercase; font-weight:500; }
+  .topnav a{ text-decoration:none; color:rgba(246,236,221,.62); transition:color .25s ease; }
+  .topnav a:hover{ color:#f6ecdd; }
+
+  /* ---------- hero ---------- */
+  .hero{
+    position:relative;
+    background:var(--night);
+    color:#f6ecdd;
+    overflow:hidden;
+    isolation:isolate;
+    padding-block:clamp(96px,13vh,140px) clamp(64px,9vw,104px);
+  }
+  .hero::before{
+    content:""; position:absolute; inset:0; z-index:-2;
+    background:
+      radial-gradient(900px 520px at 78% 18%, rgba(143,114,201,.22), transparent 68%),
+      radial-gradient(700px 460px at 12% 88%, rgba(233,162,78,.14), transparent 70%);
+  }
+  .hero__grid{
+    display:grid;
+    grid-template-columns:repeat(12,1fr);
+    gap:clamp(28px,4vw,56px);
+    align-items:center;
+  }
+  .hero__copy{ grid-column:1 / span 6; }
+  .hero__art{ grid-column:8 / span 5; }
+
+  .hero__app{
+    font-family:"Instrument Sans",sans-serif;
+    font-size:.7rem; letter-spacing:.24em;
+    color:rgba(240,230,215,.62);
+    margin-bottom:clamp(14px,1.8vw,20px);
+  }
+  .hero__app::before{ width:22px; background:var(--amber); opacity:.9; }
+
+  .hero h1{
+    font-size:clamp(2.5rem,5.4vw,4.3rem);
+    line-height:1;
+    letter-spacing:-.032em;
+    color:#fbf4e7;
+    margin-bottom:clamp(18px,2.4vw,26px);
+  }
+  .mark{ font-style:italic; font-variation-settings:"SOFT" 60,"WONK" 1; color:#f0b566; letter-spacing:-.01em; }
+
+  .hero .lede{ color:rgba(240,230,215,.76); max-width:30em; margin:0 0 clamp(28px,3.6vw,36px); }
+
+  .hero__actions{ display:flex; align-items:center; gap:clamp(18px,3vw,34px); flex-wrap:wrap; }
+
+  .btn{
+    display:inline-flex; align-items:center; gap:14px;
+    padding:15px 22px; border-radius:4px;
+    background:#f4e7d1; color:#241a12;
+    text-decoration:none;
+    font-size:.78rem; font-weight:600; letter-spacing:.11em; text-transform:uppercase;
+    border:1px solid rgba(255,255,255,.6);
+    box-shadow:0 16px 34px -20px rgba(0,0,0,.9);
+    transition:transform .3s var(--ease), background .3s ease, box-shadow .3s ease;
+  }
+  .btn:hover{ transform:translateY(-2px); background:#fff6e7; box-shadow:0 22px 40px -20px rgba(0,0,0,.95); }
+  .btn__meta{
+    padding-left:14px; border-left:1px solid rgba(36,26,18,.22);
+    font-size:.72rem; font-weight:500; letter-spacing:.06em; text-transform:none; color:#6d5945;
+  }
+
+  .link-quiet{
+    display:inline-flex; align-items:center; gap:9px;
+    font-size:.78rem; letter-spacing:.13em; text-transform:uppercase; font-weight:500;
+    color:rgba(246,236,221,.8); text-decoration:none;
+    padding-bottom:5px; border-bottom:1px solid rgba(246,236,221,.28);
+    transition:color .25s ease, border-color .25s ease;
+  }
+  .link-quiet:hover{ color:#fff; border-color:var(--amber); }
+
+  .hero__facts{
+    display:flex; gap:clamp(18px,3vw,34px); flex-wrap:wrap;
+    margin-top:clamp(30px,4vw,42px);
+    padding-top:clamp(20px,2.6vw,26px);
+    border-top:1px solid rgba(246,236,221,.14);
+    font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+    color:rgba(246,236,221,.46);
+  }
+
+  /* ---------- phone frames ---------- */
+  .phone{
+    position:relative;
+    margin:0;
+    border-radius:clamp(26px,3.4vw,40px);
+    padding:clamp(7px,.9vw,10px);
+    background:linear-gradient(160deg,#3a3230,#171210 42%,#2b2422);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.09),
+      0 44px 80px -40px rgba(0,0,0,.85),
+      0 10px 26px -14px rgba(0,0,0,.6);
+  }
+  .phone img{
+    display:block; width:100%; height:auto;
+    border-radius:clamp(20px,2.6vw,31px);
+  }
+  .phone--hero{ transform:rotate(1.4deg); max-width:clamp(260px,26vw,320px); margin-inline:auto; }
+  .phone--hero::after{
+    content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+    background:linear-gradient(150deg, rgba(255,255,255,.14), transparent 34%);
+  }
+
+  .phone-row{
+    display:flex; gap:clamp(14px,2.4vw,26px);
+    align-items:flex-start;
+    justify-content:center;
+  }
+  .phone-row .phone{ flex:1 1 0; min-width:0; }
+
+  /* ---------- sections ---------- */
+  .band{ padding-block:clamp(64px,10vw,124px); }
+  .band--tight{ padding-block:clamp(52px,7vw,86px); }
+  .band--paper-deep{ background:var(--paper-deep); }
+  .band--night{ background:var(--night); color:#f2e7d6; }
+
+  h2{ font-size:clamp(1.85rem,3.9vw,3.05rem); line-height:1.08; letter-spacing:-.028em; }
+
+  /* ---------- feature list ---------- */
+  .features{ display:grid; grid-template-columns:repeat(12,1fr); gap:clamp(24px,4vw,56px); align-items:start; }
+  .features__intro{ grid-column:1 / span 4; position:sticky; top:40px; }
+  .features__list{ grid-column:6 / span 7; }
+
+  .feature{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:clamp(16px,2.4vw,26px);
+    padding-block:clamp(22px,3vw,30px);
+    border-top:1px solid rgba(70,45,20,.16);
+  }
+  .feature:first-child{ border-top:0; padding-top:0; }
+  .feature__num{
+    font-family:"Fraunces",Georgia,serif;
+    font-style:italic;
+    font-size:.95rem;
+    color:var(--amber-deep);
+    padding-top:.35em;
+    min-width:2.2em;
+  }
+  .feature h3{ font-size:clamp(1.25rem,2.1vw,1.6rem); line-height:1.2; margin-bottom:8px; }
+  .feature p{ margin:0; color:var(--ink-soft); max-width:34em; }
+
+  /* ---------- storybook ---------- */
+  .storybook{ display:grid; grid-template-columns:repeat(12,1fr); gap:clamp(24px,4vw,56px); align-items:center; }
+  .storybook__art{ grid-column:1 / span 5; }
+  .storybook__text{ grid-column:7 / span 6; }
+  .storybook__text--wide{ grid-column:1 / span 6; }
+  .storybook__art--right{ grid-column:8 / span 5; }
+  .storybook h2{ margin-bottom:20px; }
+  .storybook p{ color:var(--ink-soft); max-width:32em; }
+  .storybook p + p{ margin-top:1em; }
+
+  .quote{
+    margin:clamp(24px,3vw,32px) 0 0;
+    padding-left:clamp(18px,2.4vw,24px);
+    border-left:2px solid var(--amber);
+    font-family:"Fraunces",Georgia,serif;
+    font-style:italic;
+    font-size:clamp(1.1rem,1.9vw,1.35rem);
+    line-height:1.45;
+    color:var(--ink);
+    max-width:26em;
+  }
+  .quote cite{
+    display:block;
+    margin-top:12px;
+    font-family:"Instrument Sans",sans-serif;
+    font-style:normal;
+    font-size:.72rem;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+
+  /* ---------- privacy ---------- */
+  .privacy-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(215px,1fr));
+    gap:clamp(20px,3vw,34px);
+    margin-top:clamp(32px,4.4vw,48px);
+  }
+  .privacy-item{
+    padding-top:20px;
+    border-top:1px solid rgba(240,230,215,.16);
+  }
+  .privacy-item h3{
+    font-family:"Instrument Sans",sans-serif;
+    font-size:.72rem;
+    font-weight:600;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin-bottom:10px;
+  }
+  .privacy-item p{ margin:0; color:rgba(240,230,215,.7); font-size:.95rem; line-height:1.6; }
+
+  .privacy__more{ margin:clamp(32px,4.4vw,46px) 0 0; }
+  .privacy__more a{
+    display:inline-flex; align-items:center; gap:10px;
+    font-size:.78rem; letter-spacing:.13em; text-transform:uppercase; font-weight:500;
+    color:rgba(246,236,221,.82); text-decoration:none;
+    padding-bottom:5px; border-bottom:1px solid rgba(246,236,221,.28);
+    transition:color .25s ease, border-color .25s ease;
+  }
+  .privacy__more a:hover{ color:#fff; border-color:var(--amber); }
+
+  /* ---------- closing ---------- */
+  .closing{ text-align:center; padding-block:clamp(72px,11vw,132px); position:relative; overflow:hidden; }
+  .closing::before{
+    content:""; position:absolute; left:50%; top:0; transform:translateX(-50%);
+    width:min(900px,120%); height:100%;
+    background:radial-gradient(closest-side, rgba(233,162,78,.16), transparent 72%);
+    pointer-events:none;
+  }
+  .closing__inner{ position:relative; }
+  .closing h2{ font-size:clamp(2rem,4.6vw,3.4rem); color:#fbf4e7; max-width:18ch; margin-inline:auto; }
+  .closing p{ color:rgba(240,230,215,.66); max-width:34em; margin:20px auto 0; }
+  .closing .hero__actions{ justify-content:center; margin-top:32px; }
+
+  /* ---------- footer ---------- */
+  .site-foot{ background:var(--night); color:rgba(240,230,215,.5); font-size:.82rem; padding-bottom:40px; }
+  .site-foot__rule{
+    height:1px;
+    background:linear-gradient(90deg, rgba(240,230,215,.02), rgba(240,230,215,.2), rgba(240,230,215,.02));
+    margin-bottom:28px;
+  }
+  .site-foot__grid{ display:flex; justify-content:space-between; align-items:flex-start; gap:28px; flex-wrap:wrap; }
+  .site-foot a{ color:rgba(240,230,215,.72); text-decoration:none; border-bottom:1px solid rgba(240,230,215,.2); padding-bottom:1px; }
+  .site-foot a:hover{ color:#fff; border-color:var(--amber); }
+  .site-foot__links{ display:flex; gap:22px; flex-wrap:wrap; }
+  .site-foot__small{ margin-top:26px; font-size:.75rem; color:rgba(240,230,215,.34); max-width:44em; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width:900px){
+    .hero__copy,.hero__art,
+    .features__intro,.features__list,
+    .storybook__art,.storybook__text,
+    .storybook__art--right,.storybook__text--wide{ grid-column:1 / -1; }
+
+    .hero__art{ order:2; max-width:290px; margin-inline:auto; }
+    .phone--hero{ max-width:290px; }
+    .hero__copy{ order:1; text-align:left; }
+    .features__intro{ position:static; margin-bottom:8px; }
+    .storybook__art{ max-width:360px; margin-inline:auto; }
+  }
+
+  @media (max-width:760px){
+    body{ font-size:16.5px; }
+    .topbar__inner{ flex-wrap:nowrap; align-items:center; gap:14px; }
+    .topnav{ font-size:.61rem; gap:11px; letter-spacing:.1em; }
+    .hero{ padding-block:clamp(84px,12vh,110px) clamp(52px,8vw,72px); }
+    .hero__grid{ gap:clamp(28px,6vw,40px); }
+    .btn{ width:100%; justify-content:space-between; }
+    .hero__actions{ gap:18px; }
+    .hero__facts{ gap:14px 20px; font-size:.66rem; }
+    .site-foot__grid{ flex-direction:column; }
+    .phone-row{ gap:10px; }
+  }
+
+  @media (max-width:420px){
+    .wordmark{ font-size:.95rem; }
+    .topnav{ gap:13px; }
+    .btn__meta{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="hero">
+  <div class="topbar">
+    <div class="shell topbar__inner">
+      <a class="wordmark" href="../index.html"><span class="wordmark__dot" aria-hidden="true"></span>Buddy&rsquo;s Burrow</a>
+      <nav class="topnav" aria-label="Sections">
+        <a href="#features">Features</a>
+        <a href="#storybook">Storybook</a>
+        <a href="#privacy">Privacy</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="shell hero__grid" id="main">
+    <div class="hero__copy">
+      <p class="eyebrow eyebrow--light hero__app">Buddy: Your AI Friend</p>
+      <h1>A fuzzy purple friend who lives on your <span class="mark">iPhone</span>.</h1>
+      <p class="lede">He keeps your notes and reminders, remembers the things you mention in passing, reads the pages you save for later, and tells you his story a chapter at a time.</p>
+      <div class="hero__actions">
+        <!-- APP STORE LINK: swap this href for the real apps.apple.com URL on launch day. -->
+        <a class="btn" href="#get">Coming to the App Store<span class="btn__meta">Nov 4</span></a>
+        <a class="link-quiet" href="../index.html">Meet the world</a>
+      </div>
+      <div class="hero__facts">
+        <span>Free</span>
+        <span>No account</span>
+        <span>No ads</span>
+        <span>Works offline</span>
+      </div>
+    </div>
+
+    <figure class="hero__art phone phone--hero" data-reveal>
+      <img src="img/meet.jpg" alt="Buddy's welcome screen: Meet Buddy, your AI friend, with his four promises — chats stay yours, remembers you, grows with you, works offline" fetchpriority="high">
+    </figure>
+  </div>
+</header>
+
+<main>
+
+  <section class="band" id="features">
+    <div class="shell features">
+      <div class="features__intro">
+        <p class="eyebrow" data-reveal>What he does</p>
+        <h2 data-reveal style="--d:60ms">Small things, done properly.</h2>
+        <p class="lede" data-reveal style="--d:110ms">Buddy is not a search engine with a face. He is a companion who keeps track of your day and gets to know you slowly.</p>
+      </div>
+
+      <div class="features__list">
+        <article class="feature" data-reveal>
+          <span class="feature__num">01</span>
+          <div>
+            <h3>Talk or type</h3>
+            <p>Speak out loud or write. He answers in his own voice, and he is honest about being an AI when it matters.</p>
+          </div>
+        </article>
+
+        <article class="feature" data-reveal style="--d:60ms">
+          <span class="feature__num">02</span>
+          <div>
+            <h3>Notes and reminders</h3>
+            <p>Say &ldquo;remind me to call mom at six&rdquo; and it is done. He keeps notes the same way, and shows you what he saved.</p>
+          </div>
+        </article>
+
+        <article class="feature" data-reveal style="--d:120ms">
+          <span class="feature__num">03</span>
+          <div>
+            <h3>A memory you can read and edit</h3>
+            <p>Open his memory and see exactly what he knows about you. Ask him to change something, or to forget it entirely. Changes apply at his next nap.</p>
+          </div>
+        </article>
+
+        <article class="feature" data-reveal style="--d:180ms">
+          <span class="feature__num">04</span>
+          <div>
+            <h3>Pages you save for later</h3>
+            <p>Send him an article from Safari and he keeps it, clean and readable, so you can come back to it without the ads.</p>
+          </div>
+        </article>
+
+        <article class="feature" data-reveal style="--d:240ms">
+          <span class="feature__num">05</span>
+          <div>
+            <h3>Buddy&rsquo;s Run</h3>
+            <p>A small game about gliding on paper planes and catching acorns. He keeps playing while you do something else.</p>
+          </div>
+        </article>
+
+        <article class="feature" data-reveal style="--d:300ms">
+          <span class="feature__num">06</span>
+          <div>
+            <h3>Works offline</h3>
+            <p>On a plane, on the train, in a dead spot. Buddy runs on your phone, so he is there when the signal is not.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band--paper-deep">
+    <div class="shell">
+      <div class="phone-row">
+        <figure class="phone" data-reveal>
+          <img src="img/chat.jpg" alt="A chat with Buddy: he greets you, sets a reminder to call mom at 6pm, and remembers your dog's name is Max" loading="lazy">
+        </figure>
+        <figure class="phone" data-reveal style="--d:80ms">
+          <img src="img/notes.jpg" alt="Buddy saving a reminder and a note, with a Reminder set confirmation card" loading="lazy">
+        </figure>
+        <figure class="phone" data-reveal style="--d:160ms">
+          <img src="img/memory.jpg" alt="Buddy's memory screen showing what he remembers about you, with options to change or forget each item" loading="lazy">
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="storybook">
+    <div class="shell storybook">
+      <figure class="storybook__art phone" data-reveal>
+        <img src="img/storybook.jpg" alt="Buddy's Storybook, Book 1: Finding Home, Chapter 1, with an illustration of Buddy digging a burrow for small animals" loading="lazy">
+      </figure>
+      <div class="storybook__text">
+        <p class="eyebrow" data-reveal>Storybook</p>
+        <h2 data-reveal style="--d:60ms">He has a story, and he tells it slowly.</h2>
+        <p data-reveal style="--d:110ms">Buddy grew up in a forest, digging burrows so the smaller animals had somewhere safe. That is Book One, Chapter One. The rest of it he keeps to himself until he trusts you.</p>
+        <p data-reveal style="--d:160ms">The more you talk, the more chapters unlock. It is not a reward system. It is just how he is.</p>
+        <blockquote class="quote" data-reveal style="--d:210ms">
+          Can I tell you a secret? I grew up in a forest, digging burrows so the little animals had somewhere safe.
+          <cite>Buddy &middot; Book 1, Chapter 1</cite>
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band--paper-deep">
+    <div class="shell">
+      <div class="storybook">
+        <div class="storybook__text storybook__text--wide">
+          <p class="eyebrow" data-reveal>Saved pages</p>
+          <h2 data-reveal style="--d:60ms">Send him something to read.</h2>
+          <p data-reveal style="--d:110ms">Share a link from Safari and Buddy keeps a clean copy: just the words and the pictures, no banners, no pop-ups. It is waiting for you when you have a minute.</p>
+          <p data-reveal style="--d:160ms">Everything stays on your phone, so your reading list is nobody else&rsquo;s business.</p>
+        </div>
+        <figure class="storybook__art storybook__art--right phone" data-reveal>
+          <img src="img/pages.jpg" alt="Buddy's Saved pages list showing five articles saved from a blog, each with a thumbnail and how long ago it was saved" loading="lazy">
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band--night" id="privacy">
+    <div class="shell">
+      <p class="eyebrow eyebrow--light" data-reveal>Privacy</p>
+      <h2 data-reveal style="--d:60ms">He lives on your phone. That is the whole point.</h2>
+      <p class="lede lede--light" data-reveal style="--d:110ms">Buddy runs locally. Your conversations are stored on your iPhone, under your control, and kept out of iCloud and computer backups.</p>
+
+      <div class="privacy-grid">
+        <div class="privacy-item" data-reveal>
+          <h3>No account</h3>
+          <p>Nothing to sign up for, nothing to log into, no profile on a server somewhere.</p>
+        </div>
+        <div class="privacy-item" data-reveal style="--d:60ms">
+          <h3>No data collected</h3>
+          <p>No analytics, no tracking, no advertising identifiers. There is nothing to sell.</p>
+        </div>
+        <div class="privacy-item" data-reveal style="--d:120ms">
+          <h3>Search is opt-in</h3>
+          <p>He only looks things up online if you agree, and only the search words are sent &mdash; never your chats.</p>
+        </div>
+        <div class="privacy-item" data-reveal style="--d:180ms">
+          <h3>Yours to move</h3>
+          <p>Open your chats on your own laptop, or move Buddy to a new phone over Wi-Fi. No cloud in between.</p>
+        </div>
+      </div>
+
+      <p class="privacy__more" data-reveal style="--d:220ms">
+        <a href="privacy/index.html">Read the full privacy policy &rarr;</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="band--night closing" id="get">
+    <div class="shell closing__inner">
+      <p class="eyebrow eyebrow--light eyebrow--bare" data-reveal>Out November 4</p>
+      <h2 data-reveal style="--d:60ms">He&rsquo;s already moved his things in.</h2>
+      <p data-reveal style="--d:110ms">Buddy: Your AI Friend arrives on the App Store on November 4. Free, no account, no subscription. For ages 13 and up.</p>
+      <div class="hero__actions" data-reveal style="--d:160ms">
+        <!-- APP STORE LINK: swap this href for the real apps.apple.com URL on launch day. -->
+        <a class="btn" href="#">Coming to the App Store<span class="btn__meta">Nov 4</span></a>
+        <a class="link-quiet" href="https://www.patreon.com/josephkhan" target="_blank" rel="noopener">Support my work</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="shell">
+    <div class="site-foot__rule"></div>
+    <div class="site-foot__grid">
+      <a class="wordmark" href="../index.html"><span class="wordmark__dot" aria-hidden="true"></span>Buddy&rsquo;s Burrow</a>
+      <nav class="site-foot__links" aria-label="Footer">
+        <a href="privacy/index.html">Privacy &amp; support</a>
+        <a href="https://www.patreon.com/josephkhan" target="_blank" rel="noopener">Patreon</a>
+        <a href="../index.html">The world</a>
+      </nav>
+    </div>
+    <p class="site-foot__small">Made by Joseph Khan, an independent artist and developer in California. Buddy is an AI and occasionally gets things wrong. For ages 13 and up. &copy; <span id="year">2026</span></p>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.add('js');
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items = document.querySelectorAll('[data-reveal]');
+
+  if (!reduce && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.08 });
+    items.forEach(function (el) { io.observe(el); });
+  } else {
+    items.forEach(function (el) { el.classList.add('in'); });
+  }
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>

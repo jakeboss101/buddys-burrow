@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Buddy's Burrow — something fuzzy moved into your phone</title>
-<meta name="description" content="Buddy is a small purple creature who lives in a burrow inside your iPhone. He keeps your notes and reminders, remembers what you mention in passing, and tells you his story a chapter at a time.">
+<title>Buddy: Your AI Friend — coming November 4 to the App Store</title>
+<meta name="description" content="Buddy is a small purple creature who lives in a burrow inside your iPhone. He keeps your notes and reminders, remembers what you mention in passing, and tells you his story a chapter at a time. The app is Buddy: Your AI Friend, coming November 4 to the App Store.">
 <meta name="theme-color" content="#100c0a">
-<meta property="og:title" content="Buddy's Burrow">
-<meta property="og:description" content="Something fuzzy moved into your phone.">
+<meta property="og:site_name" content="Buddy's Burrow">
+<meta property="og:title" content="Buddy: Your AI Friend">
+<meta property="og:description" content="Something fuzzy moved into your phone. Coming November 4 to the App Store.">
 <meta property="og:image" content="https://buddysburrow.com/img/hero.jpg">
 <meta property="og:type" content="website">
 <link rel="icon" href="img/icon.png">
@@ -224,6 +225,15 @@
     max-width:31em;
     margin:0 0 clamp(30px,4vw,40px);
   }
+
+  .hero__app{
+    font-family:"Instrument Sans",-apple-system,sans-serif;
+    font-size:.7rem;
+    letter-spacing:.24em;
+    color:rgba(240,230,215,.62);
+    margin-bottom:clamp(14px,1.8vw,20px);
+  }
+  .hero__app::before{ width:22px; background:var(--amber); opacity:.9; }
 
   .hero__actions{
     display:flex; align-items:center; gap:clamp(18px,3vw,34px);
@@ -600,17 +610,18 @@
       <nav class="topnav" aria-label="Sections">
         <a href="#story">The story</a>
         <a href="#friends">Friends</a>
-        <a href="#support">Support</a>
+        <a href="app/index.html">The app</a>
       </nav>
     </div>
   </div>
 
   <div class="shell hero__inner" id="main">
+    <p class="eyebrow eyebrow--light hero__app" data-reveal>Buddy: Your AI Friend</p>
     <h1>Something <span class="mark">fuzzy</span> moved into your phone.</h1>
     <p class="lede">Buddy is a small purple creature living in a burrow behind your home screen. He keeps your notes and reminders, remembers the things you mention in passing, and tells you his story a chapter at a time.</p>
     <div class="hero__actions">
       <!-- APP STORE LINK: swap this href for the real apps.apple.com URL on launch day. -->
-      <a class="btn" href="#waiting">Coming to the App Store<span class="btn__meta">Nov 4</span></a>
+      <a class="btn" href="app/index.html">Buddy: Your AI Friend<span class="btn__meta">Nov 4</span></a>
       <a class="link-quiet" href="https://www.patreon.com/josephkhan" target="_blank" rel="noopener">Support my work</a>
     </div>
   </div>
@@ -695,7 +706,7 @@
         <h2 data-reveal style="--d:60ms">Your conversations stay on your phone.</h2>
         <p data-reveal style="--d:110ms">No account to create, no feed to scroll, no ads and no subscription. Buddy runs on your iPhone, and what you tell him is yours.</p>
         <div class="privacy__rule"></div>
-        <p class="privacy__fine" data-reveal>Buddy is an AI and is clumsy at times. The app is for ages 13 and up. <a href="https://buddyprivateai.com" target="_blank" rel="noopener">Privacy policy &amp; support</a>.</p>
+        <p class="privacy__fine" data-reveal>Buddy is an AI and is clumsy at times. The app is for ages 13 and up. <a href="app/privacy/index.html">Privacy policy &amp; support</a>.</p>
       </div>
       <figure class="privacy__art plate plate--framed" data-reveal>
         <img src="img/phone.jpg" alt="Buddy sitting in a sunlit forest holding a glowing phone and smiling">
@@ -726,10 +737,9 @@
     <div class="shell closing__inner">
       <p class="eyebrow eyebrow--light eyebrow--bare" data-reveal>Out November 4</p>
       <h2 data-reveal style="--d:60ms">He&rsquo;s already moved his things in.</h2>
-      <p data-reveal style="--d:110ms">Buddy&rsquo;s Burrow arrives on the App Store on November 4. Free, no account, no subscription. Until then, there&rsquo;s a lamp on in the burrow.</p>
+      <p data-reveal style="--d:110ms"><em>Buddy: Your AI Friend</em> arrives on the App Store on November 4. Free, no account, no subscription. Until then, there&rsquo;s a lamp on in the burrow.</p>
       <div class="hero__actions" data-reveal style="--d:160ms">
-        <!-- APP STORE LINK: swap this href for the real apps.apple.com URL on launch day. -->
-        <a class="btn" href="#">Coming to the App Store<span class="btn__meta">Nov 4</span></a>
+        <a class="btn" href="app/index.html">Meet the app<span class="btn__meta">Nov 4</span></a>
         <a class="link-quiet" href="https://www.patreon.com/josephkhan" target="_blank" rel="noopener">Support my work</a>
       </div>
     </div>
@@ -743,9 +753,9 @@
     <div class="site-foot__grid">
       <a class="wordmark" href="#main"><span class="wordmark__dot" aria-hidden="true"></span>Buddy&rsquo;s Burrow</a>
       <nav class="site-foot__links" aria-label="Footer">
-        <a href="https://buddyprivateai.com" target="_blank" rel="noopener">Privacy &amp; support</a>
+        <a href="app/privacy/index.html">Privacy &amp; support</a>
         <a href="https://www.patreon.com/josephkhan" target="_blank" rel="noopener">Patreon</a>
-        <a href="#waiting">App Store</a>
+        <a href="app/index.html">The app</a>
       </nav>
     </div>
     <p class="site-foot__small">Made by Joseph Khan, an independent artist and developer in California. Buddy is an AI and occasionally gets things wrong. For ages 13 and up. &copy; <span id="year">2026</span></p>
