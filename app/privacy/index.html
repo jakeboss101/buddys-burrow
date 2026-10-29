@@ -24,8 +24,7 @@
     --paper:#f7f0e2;
     --paper-raised:#fbf6ec;
     --night:#100c0a;
-    --amber:#e9a24e;
-    --amber-deep:#a9631d;
+    --buddy:#b39dff;
     --buddy-deep:#5c3f96;
     --rule:rgba(70,45,20,.16);
     --shell:1180px;
@@ -49,7 +48,7 @@
     overflow-x:hidden;
   }
 
-  ::selection{ background:rgba(143,114,201,.28); }
+  ::selection{ background:rgba(179,157,255,.28); }
   a{ color:var(--buddy-deep); text-underline-offset:2px; }
   :focus-visible{ outline:2px solid var(--buddy-deep); outline-offset:3px; border-radius:2px; }
 
@@ -84,7 +83,7 @@
     text-decoration:none; color:var(--ink);
     display:inline-flex; align-items:center; gap:9px;
   }
-  .wordmark__dot{ width:8px; height:8px; border-radius:50%; background:var(--buddy-deep); box-shadow:0 0 0 4px rgba(143,114,201,.18); }
+  .wordmark__dot{ width:8px; height:8px; border-radius:50%; background:var(--buddy-deep); box-shadow:0 0 0 4px rgba(179,157,255,.18); }
   .topnav{ display:flex; gap:clamp(16px,2.4vw,26px); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; font-weight:500; }
   .topnav a{ text-decoration:none; color:var(--ink-faint); transition:color .25s ease; }
   .topnav a:hover{ color:var(--ink); }
@@ -100,7 +99,7 @@
     display:flex; align-items:center; gap:12px;
     margin:0 0 18px;
     font-size:.68rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
-    color:var(--amber-deep);
+    color:var(--buddy-deep);
   }
   .eyebrow::before{ content:""; width:34px; height:1px; background:currentColor; opacity:.8; flex:none; }
 
@@ -161,7 +160,7 @@
   .summary{
     background:var(--paper-raised);
     border:1px solid var(--rule);
-    border-left:3px solid var(--amber);
+    border-left:3px solid var(--buddy-deep);
     border-radius:3px;
     padding:clamp(20px,2.8vw,30px);
     margin-bottom:clamp(34px,4.4vw,48px);
@@ -170,7 +169,7 @@
   .summary h2{
     font-family:"Instrument Sans",sans-serif;
     font-size:.68rem; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
-    color:var(--amber-deep);
+    color:var(--buddy-deep);
     margin-bottom:14px;
   }
   .summary ul{ margin:0; padding:0; list-style:none; }
@@ -188,7 +187,7 @@
     position:absolute; left:2px; top:.62em;
     width:8px; height:8px;
     border-radius:50%;
-    border:1.5px solid var(--amber-deep);
+    border:1.5px solid var(--buddy-deep);
   }
   .summary strong{ color:var(--ink); font-weight:600; }
 
@@ -210,7 +209,7 @@
     font-family:"Fraunces",Georgia,serif;
     font-style:italic;
     font-size:.62em;
-    color:var(--amber-deep);
+    color:var(--buddy-deep);
     font-variant-numeric:tabular-nums;
   }
 
@@ -283,9 +282,9 @@
   .site-foot__rule{ height:1px; background:linear-gradient(90deg, rgba(240,230,215,.02), rgba(240,230,215,.2), rgba(240,230,215,.02)); margin-bottom:28px; }
   .site-foot__grid{ display:flex; justify-content:space-between; align-items:flex-start; gap:28px; flex-wrap:wrap; }
   .site-foot .wordmark{ color:#f6ecdd; }
-  .site-foot .wordmark__dot{ background:var(--buddy-deep); box-shadow:0 0 0 4px rgba(143,114,201,.18); }
+  .site-foot .wordmark__dot{ background:var(--buddy-deep); box-shadow:0 0 0 4px rgba(179,157,255,.18); }
   .site-foot a{ color:rgba(240,230,215,.72); text-decoration:none; border-bottom:1px solid rgba(240,230,215,.2); padding-bottom:1px; }
-  .site-foot a:hover{ color:#fff; border-color:var(--amber); }
+  .site-foot a:hover{ color:#fff; border-color:var(--buddy); }
   .site-foot__links{ display:flex; gap:22px; flex-wrap:wrap; }
   .site-foot__small{ margin-top:26px; font-size:.75rem; color:rgba(240,230,215,.34); max-width:44em; }
 
